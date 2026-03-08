@@ -1,4 +1,4 @@
-pub mod player {
-    #[derive(Component)]
-    struct Player;
-}
+use bevy::ecs::component::Component;
+
+#[derive(Component)]
+pub struct Player;
