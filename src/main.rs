@@ -1,6 +1,7 @@
 use std::ops::Add;
 use std::sync::mpsc::TryRecvError;
 use std::sync::{Arc, Mutex, OnceLock};
+use bevy::platform::collections::HashSet;
 use bevy::{app::{App, Startup, Update}, ecs::{component, system::{Command, Commands, Query}}, DefaultPlugins};
 use bevy::input::ButtonInput;
 use bevy::mesh::Mesh2d;
@@ -45,37 +46,42 @@ fn init(mut commands:Commands){
             Synchronized(123)
         )
     );
+     commands.spawn(
+                (
+                        Sprite{
+                            color: Color::WHITE,
+                            custom_size: Some(Vec2::new(100.0, 100.0)),
+                            ..default()
+                        },
+                        Transform::from_xyz(0.0, 0.0, 0.0),
+                        Player,
+                        Synchronized(124)
+                    )
+        );
 }
 
 fn sync(mut commands:Commands, mut client:ResMut<GameStateReceiver>, mut query:Query<(&Synchronized, &mut Transform), With<Synchronized>>){
 
     match client.0.try_recv(){
         Ok(mut game_state) =>{
-
+            let mut spawned_player_ids: HashSet<i32> = HashSet::new(); 
             for (sync, mut transform) in query.iter_mut(){
 
                 
 
-
                 let id = sync.0;
+                spawned_player_ids.insert(id);
+                println!("Player Id: {}", id);
                 println!("Game State: {:?}", game_state);
                 if let Some(player) = game_state.get_player_by_id(id){
                     println!("Transform Player State: {:?}", player);
                     transform.translation.x = player.x;
                     transform.translation.y = player.y;
-                }else{
-                     commands.spawn(
-                (
-                Sprite{
-                    color: Color::BLACK,
-                    custom_size: Some(Vec2::new(100.0, 100.0)),
-                    ..default()
-                },
-                Transform::from_xyz(0.0, 0.0, 0.0),
-                Player,
-                Synchronized(123)
-            )
-        );
+                }
+                
+            }
+            for player in game_state.get_all_players(){
+                if !spawned_player_ids.contains(&player.id){
                 }
             }
         },

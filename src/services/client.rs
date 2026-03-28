@@ -71,6 +71,10 @@ impl GameState{
         }
         None
     }
+
+    pub fn get_all_players(&mut self)->Vec<Player>{
+        return self.players.clone();
+    }
 }
 
 
