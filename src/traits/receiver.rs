@@ -1,6 +1,7 @@
+use crate::services::client::GameState;
 
 
-trait Receiver{
+pub trait Receiver{
+    async fn read(&mut self) -> Result<GameState, String> ; 
 }
-
 

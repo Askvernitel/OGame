@@ -1,8 +1,8 @@
 
 
-trait Sender{ 
-    fn move_right();
-    fn move_left();
-    fn move_down();
-    fn move_up();
+pub trait Sender{
+    fn move_right(&mut self);
+    fn move_left(self);
+    fn move_down(self);
+    fn move_up(self);
 }
