@@ -1,5 +1,6 @@
 use std::default;
 use std::fmt::{Debug, Formatter};
+use std::sync::{Arc, Mutex};
 use bevy::ecs::message::MessageCursor;
 use bevy::prelude::Resource;
 use serde_json::json;
@@ -10,14 +11,26 @@ use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use tokio_tungstenite::tungstenite::Message;
+use crate::services::auth::Auth;
 use crate::traits::receiver::Receiver;
 use crate::traits::sender::Sender;
+
+pub enum ClientOperation {
+    MoveRight,
+    MoveLeft,
+    MoveUp,
+    MoveDown,
+}
+
+
+
 
 #[derive(Resource)]
 pub struct Client{
     stream:WebSocketStream<MaybeTlsStream<TcpStream>>,
 
-    rx:Option<mpsc::Receiver<GameState>>,
+    pub auth:Auth,
+    pub game_state:GameState,
 }
 
 #[derive(Serialize, Debug)]
@@ -26,62 +39,102 @@ struct Operation {
     pub typ: i32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Player{
+#[derive(Serialize, Debug)]
+struct OperationRequest{ 
+    pub caller:i32,
+    pub operations:Vec<Operation>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Player{
     pub id : i32,
     pub x: f32,
     pub y: f32,
     pub speed: f32,
 }
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState{
     pub players: Vec<Player>
 }
 
 
 impl GameState{
-
-    pub fn get_player_by_id(id: i32){
+    pub fn new()->Self{
+        GameState{players:vec![]}
+    }
+    pub fn get_player_by_id(&mut self, id: i32)->Option<Player>{
+        for player in &self.players{
+            if player.id == id {
+                //println!("Found Player {:?}", player);
+                return Some(player.clone());
+            }
+        }
+        None
     }
 }
 
 
 impl Client{
-    pub async fn new(rx:Option<mpsc::Receiver<GameState>> )-> Self{
+    pub async fn new(auth:Auth )-> Self{
         let (ws_stream, _) = connect_async("ws://localhost:8080/connect").await.expect("Failed to connect");
         Client{
             stream:ws_stream,
-            rx:rx
+            auth:auth,
+            game_state:GameState::new()
         }
     }
 
-    pub fn get_state(self) -> Result<GameState, String>{
-        match self.rx.unwrap().try_recv(){
-            Ok(game_state) => {
-                println!("Got game state: {:?}", game_state);
-                Ok(game_state)
-            }
-            Err(TryRecvError::Empty) => {
-                Err(String::from("Empty"))
-            }
-            Err(TryRecvError::Disconnected) => {
-                Err(String::from("Disconnected"))
-            }
-        }
+    pub fn get_state(self) -> GameState{
+        self.game_state
+    }
+
+    pub fn get_auth(self) -> Auth{
+        return self.auth;
     }
 }
 impl Sender for Client{
-    fn move_right(&mut self){
-        let json = serde_json::to_string(&Operation{typ:1});
-        self.stream.send(Message::Text(json.unwrap().into()));
-
+    async fn move_right(&mut self){
+        let json_req = serde_json::to_string(
+            &OperationRequest{
+                caller:123,
+                operations:vec![Operation{typ:0}]
+            }
+        );
+        self.stream.send(Message::Text(json_req.unwrap().into())).await;
         println!("Moving Right");
     }
-    fn move_left(self){
+    async fn move_left(&mut self){
+        let json_req = serde_json::to_string(
+            &OperationRequest{
+                caller:123,
+                operations:vec![Operation{typ:1}]
+            }
+        );
+        self.stream.send(Message::Text(json_req.unwrap().into())).await;
+        println!("Moving Left");
+
     }
-    fn move_down(self){
+    async fn move_down(&mut self){
+        let json_req = serde_json::to_string(
+            &OperationRequest{
+                caller:123,
+                operations:vec![Operation{typ:2}]
+            }
+        );
+        self.stream.send(Message::Text(json_req.unwrap().into())).await;
+        println!("Moving Down");
+
+
     }
-    fn move_up(self){
+    async fn move_up(&mut self){
+        let json_req = serde_json::to_string(
+            &OperationRequest{
+                caller:123,
+                operations:vec![Operation{typ:3}]
+            }
+        );
+        self.stream.send(Message::Text(json_req.unwrap().into())).await;
+        println!("Moving Up");
     }
 
 }
