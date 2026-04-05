@@ -20,7 +20,7 @@ use crate::components::synchronized::Synchronized;
 use crate::services::auth::Auth;
 use crate::services::*;
 use crate::services::client::{Client, ClientOperation, GameState};
-use crate::systems::movement::handle_input;
+use crate::systems::input::handle_input;
 use crate::traits::receiver::Receiver;
 use crate::traits::sender::Sender;
 
@@ -46,7 +46,7 @@ fn init(mut commands:Commands){
             Synchronized(123)
         )
     );
-     commands.spawn(
+    commands.spawn(
                 (
                         Sprite{
                             color: Color::WHITE,
@@ -56,8 +56,8 @@ fn init(mut commands:Commands){
                         Transform::from_xyz(0.0, 0.0, 0.0),
                         Player,
                         Synchronized(124)
-                    )
-        );
+                )
+    );
 }
 
 fn sync(mut commands:Commands, mut client:ResMut<GameStateReceiver>, mut query:Query<(&Synchronized, &mut Transform), With<Synchronized>>){

@@ -100,7 +100,7 @@ impl Sender for Client{
     async fn move_right(&mut self){
         let json_req = serde_json::to_string(
             &OperationRequest{
-                caller:123,
+                caller:self.auth.get_id(),
                 operations:vec![Operation{typ:0}]
             }
         );
@@ -110,7 +110,7 @@ impl Sender for Client{
     async fn move_left(&mut self){
         let json_req = serde_json::to_string(
             &OperationRequest{
-                caller:123,
+                caller:self.auth.get_id(),
                 operations:vec![Operation{typ:1}]
             }
         );
@@ -121,7 +121,7 @@ impl Sender for Client{
     async fn move_down(&mut self){
         let json_req = serde_json::to_string(
             &OperationRequest{
-                caller:123,
+                caller:self.auth.get_id(),
                 operations:vec![Operation{typ:2}]
             }
         );
@@ -133,7 +133,7 @@ impl Sender for Client{
     async fn move_up(&mut self){
         let json_req = serde_json::to_string(
             &OperationRequest{
-                caller:123,
+                caller:self.auth.get_id(),
                 operations:vec![Operation{typ:3}]
             }
         );
