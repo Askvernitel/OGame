@@ -12,7 +12,7 @@ mod components;
 mod systems;
 mod services;
 mod traits;
-
+mod gui;
 
 
 use crate::components::player::Player;
@@ -25,6 +25,12 @@ use crate::traits::receiver::Receiver;
 use crate::traits::sender::Sender;
 
 
+#[derive(States, Debug, Clone, Eq, PartialEq, Hash, Default)]
+enum State{
+    #[default]
+    IN_MENU,
+    IN_GAME
+}
 
 #[derive(Resource)]
 struct GameStateReceiver(pub mpsc::Receiver<GameState>);
@@ -91,6 +97,8 @@ fn sync(mut commands:Commands, mut client:ResMut<GameStateReceiver>, mut query:Q
     }
 }
 
+
+
 fn main() {
     let (state_tx, mut state_rx) = mpsc::channel::<GameState>(32);
     let (cmd_tx, mut cmd_rx) = mpsc::channel::<ClientOperation>(32);
@@ -126,9 +134,12 @@ fn main() {
 
     App::new()
         .add_plugins(DefaultPlugins)
+        .init_state::<State>()
         .insert_resource(game_state_receiver)
         .insert_resource(operation_sender)
-        .add_systems(Startup, init)
+        .add_systems(OnEnter(State::IN_MENU), gui::menu::setup_menu)
+        .add_systems(OnExit(State::IN_MENU), gui::menu::teardown_menu)
+        .add_systems(OnEnter(State::IN_GAME), init)
         .add_systems(Update, (handle_input, sync).chain())
         .run();
 }
