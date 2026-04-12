@@ -30,37 +30,6 @@ pub enum State{
 struct GameStateReceiver(pub mpsc::Receiver<GameState>);
 #[derive(Resource)]
 struct OperationSender(pub mpsc::Sender<ClientOperation>);
-
-fn init(mut commands:Commands){
-    commands.spawn(Camera2d::default());
-
-    commands.spawn(
-        (
-            Sprite{
-                color: Color::BLACK,
-                custom_size: Some(Vec2::new(100.0, 100.0)),
-                ..default()
-            },
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            Player,
-            Synchronized(123)
-        )
-    );
-    commands.spawn(
-                (
-                        Sprite{
-                            color: Color::WHITE,
-                            custom_size: Some(Vec2::new(100.0, 100.0)),
-                            ..default()
-                        },
-                        Transform::from_xyz(0.0, 0.0, 0.0),
-                        Player,
-                        Synchronized(124)
-                )
-    );
-}
-
-
 fn main() {
     let (state_tx, mut state_rx) = mpsc::channel::<GameState>(32);
     let (cmd_tx, mut cmd_rx) = mpsc::channel::<ClientOperation>(32);
@@ -99,8 +68,8 @@ fn main() {
         .init_state::<State>()
         .insert_resource(game_state_receiver)
         .insert_resource(operation_sender)
+        .add_plugins(plugins::game_plugin::GamePlugin)
         .add_plugins(plugins::menu_plugin::MenuPlugin)
-        .add_plugins(plugins::network_plugin::NetworkPlugin)
         .add_plugins(plugins::input_plugin::InputPlugin)
         .run();
 }

@@ -1,5 +1,8 @@
 
-use bevy::{ camera::Camera2d, color::Color, ecs::{query::{Changed, With}, system::{Commands, Query}}, ui::{BackgroundColor, Interaction, Node, Val, widget::{Button, Text}}, utils::default};
+use std::process::Command;
+
+use bevy::prelude::*;
+use bevy::{ camera::Camera2d, color::Color, ecs::{entity::Entity, query::{Changed, With}, system::{Commands, Query, ResMut}}, state::state::{NextState,State }, ui::{BackgroundColor, Interaction, Node, Val, widget::{Button, Text}}, utils::default};
 
 
 
@@ -41,17 +44,26 @@ pub fn setup_menu(mut commands:Commands){
 }
 
 
-pub fn teardown_menu(){
-
+pub fn teardown_menu(mut commands:Commands, 
+    q1:Query<Entity,With<Node>>,
+){
+    for e in &q1 {
+        commands.entity(e).despawn();
+    }
 }
+
+
 
 
 pub fn handle_button(mut query: Query<
         (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>)>){
+        (Changed<Interaction>, With<Button>)>,
+        mut next_state:ResMut<NextState<crate::State>>,
+    ){
     for (interaction, mut color) in &mut query {
         match *interaction {
             Interaction::Pressed => {
+                next_state.set(crate::State::IN_GAME);
                 *color = Color::BLACK.into();
                 println!("Clicked");
             }
@@ -63,4 +75,7 @@ pub fn handle_button(mut query: Query<
             }
         }
     }
+}
+pub fn handle_input_box(){
+
 }
