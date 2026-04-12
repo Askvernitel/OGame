@@ -8,6 +8,7 @@ mod systems;
 mod services;
 mod traits;
 mod gui;
+mod plugins;
 
 use crate::components::player::Player;
 use crate::components::synchronized::Synchronized;
@@ -59,38 +60,6 @@ fn init(mut commands:Commands){
     );
 }
 
-fn sync(mut commands:Commands, mut client:ResMut<GameStateReceiver>, mut query:Query<(&Synchronized, &mut Transform), With<Synchronized>>){
-
-    match client.0.try_recv(){
-        Ok(mut game_state) =>{
-            let mut spawned_player_ids: HashSet<i32> = HashSet::new(); 
-            for (sync, mut transform) in query.iter_mut(){
-
-                
-
-                let id = sync.0;
-                spawned_player_ids.insert(id);
-                println!("Player Id: {}", id);
-                println!("Game State: {:?}", game_state);
-                if let Some(player) = game_state.get_player_by_id(id){
-                    println!("Transform Player State: {:?}", player);
-                    transform.translation.x = player.x;
-                    transform.translation.y = player.y;
-                }
-                
-            }
-            for player in game_state.get_all_players(){
-                if !spawned_player_ids.contains(&player.id){
-                }
-            }
-        },
-        Err(err) =>{
-            eprintln!("game_state receive error {:?}", &err)
-        }
-    }
-}
-
-
 
 fn main() {
     let (state_tx, mut state_rx) = mpsc::channel::<GameState>(32);
@@ -130,9 +99,8 @@ fn main() {
         .init_state::<State>()
         .insert_resource(game_state_receiver)
         .insert_resource(operation_sender)
-        .add_systems(OnEnter(State::IN_MENU), gui::menu::setup_menu)
-        .add_systems(OnExit(State::IN_MENU), gui::menu::teardown_menu)
-        .add_systems(OnEnter(State::IN_GAME), init)
-        .add_systems(Update, (gui::menu::handle_button, handle_input, sync).chain())
+        .add_plugins(plugins::menu_plugin::MenuPlugin)
+        .add_plugins(plugins::network_plugin::NetworkPlugin)
+        .add_plugins(plugins::input_plugin::InputPlugin)
         .run();
 }
