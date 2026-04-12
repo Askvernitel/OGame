@@ -20,6 +20,7 @@ pub fn init_game(mut commands:Commands){
             Synchronized(123)
         )
     );
+    /* 
     commands.spawn(
                 (
                         Sprite{
@@ -31,7 +32,7 @@ pub fn init_game(mut commands:Commands){
                         Player,
                         Synchronized(124)
                 )
-    );
+    );*/
 }
 
 
