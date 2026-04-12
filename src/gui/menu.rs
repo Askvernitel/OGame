@@ -1,11 +1,9 @@
-
-use std::process::Command;
-
+use bevy::ecs::event;
+use bevy::input::ButtonState;
+use bevy::input::keyboard::{Key, KeyboardInput};
 use bevy::prelude::*;
 use bevy::{ camera::Camera2d, color::Color, ecs::{entity::Entity, query::{Changed, With}, system::{Commands, Query, ResMut}}, state::state::{NextState,State }, ui::{BackgroundColor, Interaction, Node, Val, widget::{Button, Text}}, utils::default};
-
-use crate::components::menu::{InputField, InputValue};
-
+use crate::components::menu::{Focused, InputField };
 
 
 pub fn setup_menu(mut commands:Commands){
@@ -21,7 +19,6 @@ pub fn setup_menu(mut commands:Commands){
             align_items: bevy::ui::AlignItems::Center,
             border: UiRect::all(Val::Px(3.0)),
             align_content: bevy::ui::AlignContent::Center,
-            //margin:UiRect { left: Val::Percent(25.0), top: Val::Percent(25.0), ..Default::default() },
             flex_direction: bevy::ui::FlexDirection::Column,
             ..default()
         },
@@ -35,19 +32,23 @@ pub fn setup_menu(mut commands:Commands){
         parent.spawn(
             (
                 Node{
-                    width: Val::Px(200.0),
+                    width: Val::Px(100.0),
                     height: Val::Px(50.0),
                     align_items: bevy::ui::AlignItems::Center,
                     justify_content: bevy::ui::JustifyContent::Center,
+                    border: UiRect::all(Val::Px(3.0)),
                     ..default()
                 },
+                BorderColor{
+                    top:Color::WHITE,
+                    bottom:Color::WHITE,
+                    left:Color::WHITE,
+                    right:Color::WHITE,
+                },
+                Text(String::from("")),
                 InputField,
-                InputValue(String::from("")),
+                Interaction::default(),
             )
-        ).with_children(|parent|{
-            parent.spawn((
-            ));
-        }
         );
         parent.spawn(
             (
@@ -104,6 +105,35 @@ pub fn handle_button(mut query: Query<
         }
     }
 }
-pub fn handle_input_box(){
+pub fn handle_focus(mut commands:Commands, mut query: Query<(&Interaction, Entity), (Changed<Interaction>, With<InputField>)>){
 
+    println!("handle_focus");
+    for (interaction ,entity)in &mut query{ 
+        println!("Interactive Element Found");
+        if *interaction == Interaction::Pressed{
+            commands.entity(entity).insert(Focused);
+        }
+    }
+}
+
+
+pub fn handle_input_field(mut commands:Commands, mut query:Query<(&mut Text, Entity), (With<Focused>, With<InputField>)>, mut events:MessageReader<KeyboardInput>){
+    for (mut text , entity)in &mut query{
+        for event in &mut events.read(){
+            if event.state == ButtonState::Pressed{
+                match &event.logical_key{
+                    Key::Character(character)=>{
+                        println!("Character pressed! {}", character);
+                        text.0.push_str(character);
+                    },
+                    Key::Backspace=>{
+                        text.0.pop();
+                    },
+                    _ =>{
+                        commands.entity(entity).remove::<Focused>();
+                    }
+                }
+            }
+        }
+    }
 }
