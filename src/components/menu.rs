@@ -1,7 +1,0 @@
-
-
-
-#[derive(Component)]
-struct Button;
-
-

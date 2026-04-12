@@ -1,10 +1,5 @@
-use std::ops::Add;
-use std::sync::mpsc::TryRecvError;
-use std::sync::{Arc, Mutex, OnceLock};
 use bevy::platform::collections::HashSet;
-use bevy::{app::{App, Startup, Update}, ecs::{component, system::{Command, Commands, Query}}, DefaultPlugins};
-use bevy::input::ButtonInput;
-use bevy::mesh::Mesh2d;
+use bevy::{app::{App, Startup, Update}, ecs::{system::{Command, Commands, Query}}, DefaultPlugins};
 use bevy::prelude::*;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
@@ -14,19 +9,17 @@ mod services;
 mod traits;
 mod gui;
 
-
 use crate::components::player::Player;
 use crate::components::synchronized::Synchronized;
 use crate::services::auth::Auth;
-use crate::services::*;
 use crate::services::client::{Client, ClientOperation, GameState};
 use crate::systems::input::handle_input;
 use crate::traits::receiver::Receiver;
 use crate::traits::sender::Sender;
 
 
-#[derive(States, Debug, Clone, Eq, PartialEq, Hash, Default)]
-enum State{
+#[derive(Component, States, Debug, Clone, Eq, PartialEq, Hash, Default)]
+pub enum State{
     #[default]
     IN_MENU,
     IN_GAME
@@ -140,6 +133,6 @@ fn main() {
         .add_systems(OnEnter(State::IN_MENU), gui::menu::setup_menu)
         .add_systems(OnExit(State::IN_MENU), gui::menu::teardown_menu)
         .add_systems(OnEnter(State::IN_GAME), init)
-        .add_systems(Update, (handle_input, sync).chain())
+        .add_systems(Update, (gui::menu::handle_button, handle_input, sync).chain())
         .run();
 }
